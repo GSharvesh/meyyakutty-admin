@@ -178,7 +178,9 @@ export const Sidebar: React.FC = () => {
           />
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <span className="block text-xs font-bold text-slate-800 truncate leading-tight">{currentUser.name}</span>
+              <span className="block text-xs font-bold text-slate-800 truncate leading-tight">
+                {currentUser.name}{currentUser.role === 'owner' ? ' (Owner)' : ''}
+              </span>
               <span className="block text-[10px] text-slate-500 uppercase font-semibold tracking-wider">
                 {currentUser.role === 'super_admin' ? 'Super Admin' : 'Owner'}
               </span>

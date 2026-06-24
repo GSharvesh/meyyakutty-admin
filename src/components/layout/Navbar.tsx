@@ -179,7 +179,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle }) => {
               className="w-8 h-8 rounded-lg object-cover"
             />
             <div className="hidden sm:block">
-              <span className="block text-xs font-bold text-slate-800 leading-tight truncate max-w-[100px]">{currentUser.name}</span>
+              <span className="block text-xs font-bold text-slate-800 leading-tight truncate max-w-[100px]">
+                {currentUser.name}{currentUser.role === 'owner' ? ' (Owner)' : ''}
+              </span>
               <span className="block text-[9px] text-slate-500 uppercase font-semibold leading-none mt-0.5">
                 {currentUser.role === 'super_admin' ? 'Super Admin' : 'Owner'}
               </span>
@@ -197,7 +199,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle }) => {
                 className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden text-slate-700"
               >
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                  <span className="block text-sm font-bold text-slate-800">{currentUser.name}</span>
+                  <span className="block text-sm font-bold text-slate-800">
+                    {currentUser.name}{currentUser.role === 'owner' ? ' (Owner)' : ''}
+                  </span>
                   <span className="block text-xs text-slate-500 truncate mt-0.5">@{currentUser.username}</span>
                 </div>
 

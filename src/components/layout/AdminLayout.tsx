@@ -211,7 +211,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <div className="flex items-center gap-2.5">
                   <img src={currentUser.avatar} className="w-8 h-8 rounded-full border" alt={currentUser.name} />
                   <div>
-                    <span className="block text-xs font-bold text-slate-800 leading-tight">{currentUser.name}</span>
+                    <span className="block text-xs font-bold text-slate-800 leading-tight">
+                      {currentUser.name}{currentUser.role === 'owner' ? ' (Owner)' : ''}
+                    </span>
                     <span className="block text-[9px] text-slate-400 font-semibold">{currentUser.role === 'super_admin' ? 'Super Admin' : 'Owner'}</span>
                   </div>
                 </div>

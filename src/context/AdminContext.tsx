@@ -478,45 +478,64 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [superAdminConfig, setSuperAdminConfigState] = useState<SuperAdminConfig>(defaultSuperConfig);
 
-  // Load from localStorage on mount (client-side)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('mk_current_user');
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
-      } else {
-        // Automatically log in as Owner Admin by default for developer evaluation
-        const defaultUser: AdminUser = { username: 'owner_admin', role: 'owner', name: 'Praveen (Owner)', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
-        setCurrentUser(defaultUser);
-        localStorage.setItem('mk_current_user', JSON.stringify(defaultUser));
-      }
-
-      setPets(getStoredItem('mk_pets', initialPets));
-      setReservations(getStoredItem('mk_reservations', initialReservations));
-      setProducts(getStoredItem('mk_products', initialProducts));
-      setOrders(getStoredItem('mk_orders', initialOrders));
-      setCustomers(getStoredItem('mk_customers', initialCustomers));
-      setReviews(getStoredItem('mk_reviews', initialReviews));
-      setNotifications(getStoredItem('mk_notifications', initialNotifications));
-      setBanners(getStoredItem('mk_banners', initialBanners));
-      setStoreSettingsState(getStoredItem('mk_settings', defaultSettings));
-      setActivityLogs(getStoredItem('mk_logs', [
-        { id: 'LOG-001', adminName: 'System', action: 'System Setup', details: 'Meeya Kutty Admin Panel Initialized', timestamp: new Date(Date.now() - 3600000 * 24).toISOString() }
-      ]));
-      setSuperAdminConfigState(getStoredItem('mk_super_config', defaultSuperConfig));
-    }
-  }, []);
-
+  // Helper to load item safely from localStorage
   const getStoredItem = <T,>(key: string, fallback: T): T => {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
+    if (typeof window !== 'undefined') {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : fallback;
+    }
+    return fallback;
   };
 
-  const saveToStorage = (key: string, data: any) => {
+  const saveToStorage = <T,>(key: string, data: T) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, JSON.stringify(data));
     }
   };
+
+  // Load from localStorage on mount (client-side)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('mk_current_user');
+      let userToSet: AdminUser | null = null;
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser && typeof parsedUser === 'object' && parsedUser.name && parsedUser.name.includes('Praveen')) {
+            parsedUser.name = 'Meeya Kutty';
+            localStorage.setItem('mk_current_user', JSON.stringify(parsedUser));
+          }
+          userToSet = parsedUser;
+        } catch {
+          localStorage.removeItem('mk_current_user');
+        }
+      } else {
+        // Automatically log in as Owner Admin by default for developer evaluation
+        const defaultUser: AdminUser = { username: 'owner_admin', role: 'owner', name: 'Meeya Kutty', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
+        userToSet = defaultUser;
+        localStorage.setItem('mk_current_user', JSON.stringify(defaultUser));
+      }
+
+      setTimeout(() => {
+        if (userToSet) {
+          setCurrentUser(userToSet);
+        }
+        setPets(getStoredItem('mk_pets', initialPets));
+        setReservations(getStoredItem('mk_reservations', initialReservations));
+        setProducts(getStoredItem('mk_products', initialProducts));
+        setOrders(getStoredItem('mk_orders', initialOrders));
+        setCustomers(getStoredItem('mk_customers', initialCustomers));
+        setReviews(getStoredItem('mk_reviews', initialReviews));
+        setNotifications(getStoredItem('mk_notifications', initialNotifications));
+        setBanners(getStoredItem('mk_banners', initialBanners));
+        setStoreSettingsState(getStoredItem('mk_settings', defaultSettings));
+        setActivityLogs(getStoredItem('mk_logs', [
+          { id: 'LOG-001', adminName: 'System', action: 'System Setup', details: 'Meeya Kutty Admin Panel Initialized', timestamp: new Date(Date.now() - 3600000 * 24).toISOString() }
+        ]));
+        setSuperAdminConfigState(getStoredItem('mk_super_config', defaultSuperConfig));
+      }, 0);
+    }
+  }, []);
 
   const logActivity = (action: string, details: string) => {
     const adminName = currentUser ? currentUser.name : 'Unknown';
@@ -536,14 +555,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const login = (username: string, role: AdminRole): boolean => {
-    let name = 'Praveen';
+    let name = 'Meeya Kutty';
     let avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
     
     if (role === 'super_admin') {
       name = 'Dev (Super Admin)';
       avatar = 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100';
     } else if (role === 'owner') {
-      name = 'Praveen (Owner)';
+      name = 'Meeya Kutty';
     }
 
     const newUser: AdminUser = { username, role, name, avatar };
