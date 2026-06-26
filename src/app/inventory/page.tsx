@@ -48,9 +48,9 @@ export default function InventoryPage() {
 
   const productStats = {
     total: products.length,
-    inStock: products.filter(p => p.status === 'In Stock').length,
-    lowStock: products.filter(p => p.status === 'Low Stock').length,
-    outOfStock: products.filter(p => p.status === 'Out Of Stock').length
+    inStock: products.filter(p => p.status === 'Active' && p.stock > 5).length,
+    lowStock: products.filter(p => p.status === 'Active' && p.stock <= 5 && p.stock > 0).length,
+    outOfStock: products.filter(p => p.status === 'Out of Stock' || (p.status === 'Active' && p.stock === 0)).length
   };
 
   const handleEditStockStart = (id: string, currentStock: number) => {
@@ -175,11 +175,14 @@ export default function InventoryPage() {
 
                     <div className="flex items-center gap-4 shrink-0 self-end sm:self-auto">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold border ${
-                        prod.status === 'In Stock' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                        prod.status === 'Low Stock' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                        'bg-red-50 text-red-700 border-red-100'
+                        prod.status === 'Draft' ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                        (prod.status === 'Out of Stock' || prod.stock === 0) ? 'bg-red-50 text-red-700 border-red-100' :
+                        prod.stock <= 5 ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-100'
                       }`}>
-                        {prod.status}
+                        {prod.status === 'Draft' ? 'Draft' :
+                         (prod.status === 'Out of Stock' || prod.stock === 0) ? 'Out of Stock' :
+                         prod.stock <= 5 ? 'Low Stock' : 'Active'}
                       </span>
 
                       {/* Stock value editor */}

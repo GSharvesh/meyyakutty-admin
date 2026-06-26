@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '@/context/AdminContext';
 import { Banner } from '@/types';
-import { X, ImageIcon } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface BannerFormModalProps {
   isOpen: boolean;
@@ -125,32 +126,26 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({ isOpen, onClos
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-505 uppercase tracking-wider block">Button Text</label>
-                  <input
-                    type="text"
-                    value={buttonText}
-                    onChange={(e) => setButtonText(e.target.value)}
-                    placeholder="e.g. Adopt Now"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:bg-white focus:border-primary/20 transition font-semibold"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-505 uppercase tracking-wider block">
-                    Banner Background Image URL <span className="text-primary">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
-                    placeholder="Paste banner image URL"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:bg-white focus:border-primary/20 transition font-medium"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-505 uppercase tracking-wider block">Button Text</label>
+                <input
+                  type="text"
+                  value={buttonText}
+                  onChange={(e) => setButtonText(e.target.value)}
+                  placeholder="e.g. Adopt Now"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm outline-none focus:bg-white focus:border-primary/20 transition font-semibold"
+                />
               </div>
+
+              {/* Modern Image Upload System */}
+              <ImageUploader
+                images={image ? [image] : []}
+                onChange={(imgs) => setImage(imgs[0] || '')}
+                maxImages={1}
+                minImages={1}
+                label="Banner Background Image"
+                helperText="Upload exactly 1 banner graphic, or select a template below. PNG, JPG, JPEG, WEBP files supported."
+              />
 
               {/* Quick image selector presets */}
               <div className="space-y-2">

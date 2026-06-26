@@ -186,7 +186,7 @@ export default function PetsPage() {
         {/* Dashboard Summary section */}
         <div
           ref={summaryContainerRef}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-3"
+          className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3"
         >
           {[
             { label: 'Total Pets', value: pets.length, icon: '📊', color: 'bg-white border-slate-200' },
@@ -194,7 +194,6 @@ export default function PetsPage() {
             { label: 'Dogs', value: pets.filter(p => p.category === 'Dogs').length, icon: '🐶', color: 'bg-white border-slate-200' },
             { label: 'Birds', value: pets.filter(p => p.category === 'Birds').length, icon: '🐦', color: 'bg-white border-slate-200' },
             { label: 'Fish', value: pets.filter(p => p.category === 'Fish').length, icon: '🐠', color: 'bg-white border-slate-200' },
-            { label: 'Small Animals', value: pets.filter(p => p.category === 'Small Animals').length, icon: '🐹', color: 'bg-white border-slate-200' },
             { label: 'Available', value: pets.filter(p => p.status === 'Available').length, icon: '🟢', color: 'bg-white border-slate-200' },
             { label: 'Reserved', value: pets.filter(p => p.status === 'Reserved').length, icon: '🟡', color: 'bg-white border-slate-200' },
             { label: 'Sold', value: pets.filter(p => p.status === 'Sold').length, icon: '🔴', color: 'bg-white border-slate-200' }
@@ -314,7 +313,22 @@ export default function PetsPage() {
         </Card>
 
         {/* View Layout displays */}
-        {viewMode === 'grid' ? (
+        {filteredPets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white border border-slate-200 rounded-3xl text-center shadow-sm max-w-md mx-auto">
+            <span className="text-4xl mb-3">🐾</span>
+            <h3 className="font-extrabold text-slate-800 text-sm">No pets added yet.</h3>
+            <p className="text-xs text-slate-450 font-semibold mt-1.5 max-w-xs">
+              Click Add New to get started. Add dogs, cats, birds, or fish to your store.
+            </p>
+            <Button
+              onClick={handleAddNewClick}
+              variant="primary"
+              className="mt-5 text-xs px-4 py-2.5 rounded-xl shadow-md shadow-red-500/10"
+            >
+              Add New Pet
+            </Button>
+          </div>
+        ) : viewMode === 'grid' ? (
           /* Grid View Layout */
           <div ref={cardsContainerRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>

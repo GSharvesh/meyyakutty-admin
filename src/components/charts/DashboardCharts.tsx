@@ -15,41 +15,15 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer
 } from 'recharts';
 import Card from '@/components/ui/Card';
-
-// Sample visual dataset representing Meeya Kutty trends
-const salesData = [
-  { month: 'Jan', revenue: 4500, orders: 120 },
-  { month: 'Feb', revenue: 5200, orders: 145 },
-  { month: 'Mar', revenue: 6100, orders: 160 },
-  { month: 'Apr', revenue: 5800, orders: 155 },
-  { month: 'May', revenue: 8500, orders: 210 },
-  { month: 'Jun', revenue: 9800, orders: 240 }
-];
-
-const categoryData = [
-  { name: 'Kitten Dry Food', sales: 180 },
-  { name: 'Tofu Litter', sales: 240 },
-  { name: 'Cat Furniture', sales: 90 },
-  { name: 'Health Supps', sales: 130 },
-  { name: 'Toys', sales: 150 }
-];
-
-const customerGrowthData = [
-  { week: 'Week 1', customers: 40 },
-  { week: 'Week 2', customers: 65 },
-  { week: 'Week 3', customers: 95 },
-  { week: 'Week 4', customers: 140 },
-  { week: 'Week 5', customers: 175 },
-  { week: 'Week 6', customers: 220 }
-];
+import { useAdmin } from '@/context/AdminContext';
 
 const RED_PALETTE = ['#DC2626', '#EF4444', '#F87171', '#FCA5A5', '#FEE2E2'];
 
 export const DashboardCharts: React.FC = () => {
+  const { orders, products, pets, customers } = useAdmin();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -68,24 +42,130 @@ export const DashboardCharts: React.FC = () => {
     );
   }
 
-  // Reservation pie/donut statistics
-  const petCategoryData = [
-    { name: 'Available Pets', value: 12 },
-    { name: 'Reserved Pets', value: 5 },
-    { name: 'Sold Pets', value: 28 }
-  ];
+  // 1. Compute Monthly Sales Data (last 6 months)
+  const getMonthlySalesData = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const data = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = months[d.getMonth()];
+
+      const monthOrders = orders.filter(o => {
+        const orderDate = new Date(o.date);
+        return (
+          orderDate.getMonth() === d.getMonth() &&
+          orderDate.getFullYear() === d.getFullYear() &&
+          o.paymentStatus === 'Paid'
+        );
+      });
+
+      const revenue = monthOrders.reduce((sum, o) => sum + o.amount, 0);
+      data.push({
+        month: monthName,
+        revenue: revenue,
+        orders: monthOrders.length
+      });
+    }
+    return data;
+  };
+
+  // 2. Compute Supplies Categories Sales Data
+  const getCategorySalesData = () => {
+    const salesMap: Record<string, number> = {};
+    
+    orders.forEach(o => {
+      if (o.paymentStatus === 'Paid') {
+        o.items.forEach(item => {
+          if (item.type === 'product') {
+            const prod = products.find(p => p.id === item.productId);
+            const catName = prod ? prod.category : 'General';
+            salesMap[catName] = (salesMap[catName] || 0) + item.quantity;
+          }
+        });
+      }
+    });
+
+    const data = Object.entries(salesMap).map(([name, sales]) => ({
+      name,
+      sales
+    }));
+
+    if (data.length === 0) {
+      // Default placeholder category structures with 0 sales
+      return [
+        { name: 'Dry Food', sales: 0 },
+        { name: 'Toys', sales: 0 },
+        { name: 'Cat Litter', sales: 0 },
+        { name: 'Grooming', sales: 0 },
+        { name: 'Accessories', sales: 0 }
+      ];
+    }
+    return data.slice(0, 5);
+  };
+
+  // 3. Compute Pet status donut stats
+  const getPetCategoryData = () => {
+    const available = pets.filter(p => p.status === 'Available').length;
+    const reserved = pets.filter(p => p.status === 'Reserved').length;
+    const sold = pets.filter(p => p.status === 'Sold').length;
+
+    return [
+      { name: 'Available Pets', value: available },
+      { name: 'Reserved Pets', value: reserved },
+      { name: 'Sold Pets', value: sold }
+    ];
+  };
+
+  // 4. Compute Customer Growth trajectory (weekly)
+  const getCustomerGrowthData = () => {
+    const data = [];
+    const totalCount = customers.length;
+
+    for (let i = 5; i >= 0; i--) {
+      // Linear mock distribution of actual customer count over 6 weeks
+      const fraction = totalCount > 0 ? Math.ceil((totalCount * (6 - i)) / 6) : 0;
+      data.push({
+        week: `Week ${6 - i}`,
+        customers: fraction
+      });
+    }
+    return data;
+  };
+
+  const salesData = getMonthlySalesData();
+  const categoryData = getCategorySalesData();
+  const petCategoryData = getPetCategoryData();
+  const customerGrowthData = getCustomerGrowthData();
+
+  const totalPets = pets.length;
+  const totalOrdersPaid = orders.filter(o => o.paymentStatus === 'Paid').length;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
+      {/* If entirely empty catalog, show premium message banner */}
+      {totalPets === 0 && products.length === 0 && orders.length === 0 && (
+        <div className="col-span-full absolute inset-0 bg-slate-50/50 backdrop-blur-[2px] rounded-3xl z-10 flex items-center justify-center p-6 text-center select-none pointer-events-none">
+          <div className="bg-white/95 border shadow-xl p-6 rounded-2xl max-w-sm">
+            <span className="text-3xl mb-2 block">📊</span>
+            <h4 className="font-extrabold text-slate-800 text-sm">Dashboard Analytics Empty</h4>
+            <p className="text-xs text-slate-400 font-semibold mt-1">
+              Add pets, supplies, and record paid customer checkouts to populate transaction analytics.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 1. Revenue area chart */}
       <Card className="bg-white border border-slate-200 p-5">
         <div className="mb-4">
           <h3 className="font-bold text-slate-800 text-base">Revenue & Sales Analytics</h3>
-          <p className="text-xs text-slate-400 font-semibold">Monthly income progression (INR in Thousands)</p>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">Monthly income progression (INR)</p>
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#DC2626" stopOpacity={0.2}/>
@@ -109,7 +189,7 @@ export const DashboardCharts: React.FC = () => {
       <Card className="bg-white border border-slate-200 p-5">
         <div className="mb-4">
           <h3 className="font-bold text-slate-800 text-base">Best Selling Supplies</h3>
-          <p className="text-xs text-slate-400 font-semibold">Quantity sold per product category</p>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">Quantity sold per product category</p>
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +211,7 @@ export const DashboardCharts: React.FC = () => {
       <Card className="bg-white border border-slate-200 p-5">
         <div className="mb-4">
           <h3 className="font-bold text-slate-800 text-base">Pet Inventory & Reservations</h3>
-          <p className="text-xs text-slate-400 font-semibold">Distribution of current registered kittens</p>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">Distribution of current registered pets</p>
         </div>
         <div className="h-64 flex flex-col sm:flex-row items-center justify-center gap-6">
           <div className="w-full sm:w-1/2 h-full">
@@ -170,11 +250,11 @@ export const DashboardCharts: React.FC = () => {
       <Card className="bg-white border border-slate-200 p-5">
         <div className="mb-4">
           <h3 className="font-bold text-slate-800 text-base">Customer Growth</h3>
-          <p className="text-xs text-slate-400 font-semibold">Total registered buyers trajectory</p>
+          <p className="text-xs text-slate-400 font-semibold mt-0.5">Total registered buyers trajectory</p>
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={customerGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <LineChart data={customerGrowthData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
               <XAxis dataKey="week" tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: '600' }} />
               <YAxis tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: '600' }} />

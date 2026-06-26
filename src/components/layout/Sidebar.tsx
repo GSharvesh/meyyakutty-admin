@@ -20,7 +20,8 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,6 +41,7 @@ export const Sidebar: React.FC = () => {
     { name: 'Pets', href: '/pets', icon: PawPrint },
     { name: 'Reservations', href: '/reservations', icon: CalendarDays, badge: pendingReservations },
     { name: 'Pet Supplies', href: '/supplies', icon: ShoppingBag },
+    { name: 'Daily Offers', href: '/offers', icon: Sparkles },
     { name: 'Inventory', href: '/inventory', icon: Boxes },
     { name: 'Orders', href: '/orders', icon: ClipboardList, badge: pendingOrders },
     { name: 'Customers', href: '/customers', icon: Users },

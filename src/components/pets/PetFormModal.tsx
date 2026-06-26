@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '@/context/AdminContext';
 import { Pet } from '@/types';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface PetFormModalProps {
   isOpen: boolean;
@@ -13,26 +14,10 @@ interface PetFormModalProps {
   petToEdit?: Pet | null;
 }
 
-const PRESET_MOCK_IMAGES = [
-  'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1618826411640-d6df44dd3f7a?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1513360309081-36f5e878fc11?w=600&auto=format&fit=crop&q=80'
-];
-
-const BREEDS_BY_CATEGORY: Record<string, string[]> = {
-  Cats: ['Persian', 'Siamese', 'British Shorthair', 'Bengal', 'Maine Coon'],
-  Dogs: ['Labrador', 'Golden Retriever', 'German Shepherd', 'Pug', 'Beagle'],
-  Birds: ['Cockatiel', 'Love Bird', 'Dove', 'Finch', 'Budgie', 'Show Budgie', 'Albino Budgie'],
-  Fish: ['Guppy', 'Molly', 'Platy', 'Angel Fish', 'Gold Fish', 'Koi Gold Fish', 'Black Gold Fish', 'Double Tail Gold Fish', 'Oranda Gold Fish'],
-  'Small Animals': ['Rabbit', 'Hamster', 'Guinea Pig']
-};
-
 export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, petToEdit }) => {
   const { addPet, updatePet } = useAdmin();
 
+  // Form Fields
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Cats');
   const [breed, setBreed] = useState('');
@@ -41,13 +26,27 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
   const [color, setColor] = useState('');
   const [description, setDescription] = useState('');
   const [healthDetails, setHealthDetails] = useState('');
-  const [vaccinationDetails, setVaccinationDetails] = useState('');
   const [price, setPrice] = useState('');
+
+  // Discount Available pricing states
+  const [discountAvailable, setDiscountAvailable] = useState<'Yes' | 'No'>('No');
   const [discountPrice, setDiscountPrice] = useState('');
-  const [minPriceLimit, setMinPriceLimit] = useState('');
-  const [maxPriceLimit, setMaxPriceLimit] = useState('');
+
+  // Face Type states
+  const [faceType, setFaceType] = useState('');
+
+  // Vaccination states
+  const [vaccinated, setVaccinated] = useState<'Yes' | 'No'>('No');
+  const [vaccinationDetails, setVaccinationDetails] = useState('');
+
+  // Featured Pet
+  const [featured, setFeatured] = useState<'Yes' | 'No'>('No');
+
+  // Availability Status
+  const [status, setStatus] = useState<Pet['status']>('Available');
+
+  // Images state (local upload)
   const [images, setImages] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     if (petToEdit) {
@@ -58,73 +57,70 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       setAge(petToEdit.age);
       setColor(petToEdit.color);
       setDescription(petToEdit.description);
-      setHealthDetails(petToEdit.healthDetails);
-      setVaccinationDetails(petToEdit.vaccinationDetails);
+      setHealthDetails(petToEdit.healthDetails || '');
       setPrice(petToEdit.price.toString());
       setDiscountPrice(petToEdit.discountPrice ? petToEdit.discountPrice.toString() : '');
-      setMinPriceLimit(petToEdit.minPriceLimit ? petToEdit.minPriceLimit.toString() : '');
-      setMaxPriceLimit(petToEdit.maxPriceLimit ? petToEdit.maxPriceLimit.toString() : '');
-      setImages(petToEdit.images);
+      setDiscountAvailable(petToEdit.discountPrice ? 'Yes' : 'No');
+      setFaceType(petToEdit.faceType || '');
+      setVaccinated(petToEdit.vaccinationDetails ? 'Yes' : 'No');
+      setVaccinationDetails(petToEdit.vaccinationDetails || '');
+      setFeatured(petToEdit.featured ? 'Yes' : 'No');
+      setStatus(petToEdit.status);
+      setImages(petToEdit.images || []);
     } else {
       setName('');
       setCategory('Cats');
-      setBreed('Persian');
+      setBreed('');
       setGender('Male');
       setAge('');
       setColor('');
       setDescription('');
       setHealthDetails('');
-      setVaccinationDetails('');
       setPrice('');
       setDiscountPrice('');
-      setMinPriceLimit('');
-      setMaxPriceLimit('');
-      setImages([PRESET_MOCK_IMAGES[Math.floor(Math.random() * PRESET_MOCK_IMAGES.length)]]);
+      setDiscountAvailable('No');
+      setFaceType('');
+      setVaccinated('No');
+      setVaccinationDetails('');
+      setFeatured('No');
+      setStatus('Available');
+      setImages([]);
     }
   }, [petToEdit, isOpen]);
 
-  // Adjust breed when category changes
+  // Adjust category dependencies
   useEffect(() => {
-    const available = BREEDS_BY_CATEGORY[category] || [];
-    if (available.length > 0 && !available.includes(breed)) {
-      if (petToEdit && petToEdit.category === category) {
-        setBreed(petToEdit.breed);
-      } else {
-        setBreed(available[0]);
-      }
+    // If category is not Cats/Dogs, reset face type
+    if (category !== 'Cats' && category !== 'Dogs') {
+      setFaceType('');
     }
   }, [category]);
-
-  const getBreedsForCategory = () => {
-    const presets = BREEDS_BY_CATEGORY[category] || [];
-    if (petToEdit && petToEdit.category === category && petToEdit.breed && !presets.includes(petToEdit.breed)) {
-      return [petToEdit.breed, ...presets];
-    }
-    return presets;
-  };
-
-  const addImage = () => {
-    if (newImageUrl.trim()) {
-      setImages([...images, newImageUrl.trim()]);
-      setNewImageUrl('');
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
-
-  const handleSelectPresetImage = (url: string) => {
-    if (!images.includes(url)) {
-      setImages([...images, url]);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || !breed || !age || !color || !price) {
       alert('Please fill in all required fields.');
+      return;
+    }
+
+    if (['Cats', 'Dogs'].includes(category) && !faceType.trim()) {
+      alert(`Face Type is required for category: ${category}.`);
+      return;
+    }
+
+    if (discountAvailable === 'Yes' && !discountPrice) {
+      alert('Please enter the discount price.');
+      return;
+    }
+
+    if (vaccinated === 'Yes' && !vaccinationDetails.trim()) {
+      alert('Please enter the vaccination details.');
+      return;
+    }
+
+    if (images.length === 0) {
+      alert('Please upload at least 1 image.');
       return;
     }
 
@@ -137,13 +133,13 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       color,
       description,
       healthDetails,
-      vaccinationDetails,
+      vaccinationDetails: vaccinated === 'Yes' ? vaccinationDetails : '',
       price: parseFloat(price),
-      discountPrice: discountPrice ? parseFloat(discountPrice) : undefined,
-      minPriceLimit: minPriceLimit ? parseFloat(minPriceLimit) : undefined,
-      maxPriceLimit: maxPriceLimit ? parseFloat(maxPriceLimit) : undefined,
-      images: images.length > 0 ? images : [PRESET_MOCK_IMAGES[0]],
-      status: (petToEdit ? petToEdit.status : 'Available') as Pet['status']
+      discountPrice: discountAvailable === 'Yes' ? parseFloat(discountPrice) : undefined,
+      faceType: ['Cats', 'Dogs'].includes(category) ? faceType : undefined,
+      featured: featured === 'Yes',
+      images,
+      status
     };
 
     if (petToEdit) {
@@ -180,9 +176,9 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
             <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-extrabold text-slate-800 text-lg">
-                  {petToEdit ? `Edit Pet details: ${petToEdit.name}` : 'Add New Kitten'}
+                  {petToEdit ? `Edit Pet Details: ${petToEdit.name}` : 'Add New Pet'}
                 </h3>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">Register a premium pedigree breed</p>
+                <p className="text-xs text-slate-400 font-semibold mt-0.5">Register a premium breed pet</p>
               </div>
               <button
                 onClick={onClose}
@@ -234,18 +230,14 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Breed <span className="text-primary">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
                     value={breed}
                     onChange={(e) => setBreed(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium cursor-pointer"
-                  >
-                    {getBreedsForCategory().map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="e.g. British Shorthair"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -291,164 +283,175 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
                 </div>
               </div>
 
-              {/* Row 3: Pricing fields */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Dynamic Row: Face Type (Cats & Dogs only) */}
+              {['Cats', 'Dogs'].includes(category) && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Price (INR) <span className="text-primary">*</span>
+                    Face Type <span className="text-primary">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={faceType}
+                    onChange={(e) => setFaceType(e.target.value)}
+                    placeholder="e.g. Doll Face, Flat Face, Apple Head"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  />
+                </div>
+              )}
+
+              {/* Pricing Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Selling Price (INR) <span className="text-primary">*</span>
                   </label>
                   <input
                     type="number"
                     required
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="850"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                    placeholder="e.g. 850"
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Discount Price
+                    Discount Available? <span className="text-primary">*</span>
                   </label>
-                  <input
-                    type="number"
-                    value={discountPrice}
-                    onChange={(e) => setDiscountPrice(e.target.value)}
-                    placeholder="799"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
+                  <select
+                    value={discountAvailable}
+                    onChange={(e) => {
+                      setDiscountAvailable(e.target.value as 'Yes' | 'No');
+                      if (e.target.value === 'No') setDiscountPrice('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Min Limit (INR)
-                  </label>
-                  <input
-                    type="number"
-                    value={minPriceLimit}
-                    onChange={(e) => setMinPriceLimit(e.target.value)}
-                    placeholder="750"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Max Limit (INR)
-                  </label>
-                  <input
-                    type="number"
-                    value={maxPriceLimit}
-                    onChange={(e) => setMaxPriceLimit(e.target.value)}
-                    placeholder="950"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
+                {discountAvailable === 'Yes' && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Discount Price (INR) <span className="text-primary">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={discountPrice}
+                      onChange={(e) => setDiscountPrice(e.target.value)}
+                      placeholder="e.g. 799"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Row 4: Description */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tell us about the kitten's temperament, habits..."
-                  rows={3}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium resize-none"
-                />
+              {/* Vaccination Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Vaccinated? <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={vaccinated}
+                    onChange={(e) => {
+                      setVaccinated(e.target.value as 'Yes' | 'No');
+                      if (e.target.value === 'No') setVaccinationDetails('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+
+                {vaccinated === 'Yes' && (
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Vaccination Details <span className="text-primary">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vaccinationDetails}
+                      onChange={(e) => setVaccinationDetails(e.target.value)}
+                      placeholder="e.g. 1st dose completed, Dewormed"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Row 5: Health & Vaccination */}
+              {/* Featured & Availability Status Section */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Featured Pet? <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={featured}
+                    onChange={(e) => setFeatured(e.target.value as 'Yes' | 'No')}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Availability Status <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as Pet['status'])}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="Sold">Sold</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Description & Health info */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tell us about the pet's temperament, habits..."
+                    rows={3}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium resize-none"
+                  />
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Health Details</label>
                   <input
                     type="text"
                     value={healthDetails}
                     onChange={(e) => setHealthDetails(e.target.value)}
-                    placeholder="e.g. Fully active, dewormed"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vaccination Details</label>
-                  <input
-                    type="text"
-                    value={vaccinationDetails}
-                    onChange={(e) => setVaccinationDetails(e.target.value)}
-                    placeholder="e.g. 1st dose completed"
+                    placeholder="e.g. Active, energetic, vet checked"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Row 6: Image URLs */}
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Multiple Kitten Images
-                </label>
-                
-                 {/* Images grid preview */}
-                {images.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {images.map((img, idx) => (
-                      <div key={idx} className="relative w-16 h-16 rounded-xl border overflow-hidden group bg-slate-100">
-                        <img src={img} className="w-full h-full object-cover" alt="Kitten preview" />
-                        <span className={`absolute top-0.5 left-0.5 px-1 py-0.2 text-[7px] font-extrabold rounded text-white tracking-wider shadow-sm uppercase ${idx === 0 ? 'bg-primary' : 'bg-slate-500/80 backdrop-blur-xs'}`}>
-                          {idx === 0 ? 'Main' : `Gal`}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(idx)}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add Image Input */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Enter custom image URL"
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={addImage}
-                    className="px-3 py-2 text-xs rounded-xl"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-
-                {/* Quick presets choices */}
-                <div className="pt-2">
-                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    Click to quick-insert high quality mock kittens images
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESET_MOCK_IMAGES.map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectPresetImage(url)}
-                        className="w-10 h-10 rounded-lg border hover:border-primary overflow-hidden shrink-0 transition"
-                      >
-                        <img src={url} className="w-full h-full object-cover" alt="preset selection" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              {/* Modern Image Upload System */}
+              <ImageUploader
+                images={images}
+                onChange={setImages}
+                maxImages={2}
+                minImages={1}
+                label="Pet Images (Max 2 images, first is Cover)"
+                helperText="Upload breed photos. PNG, JPG, JPEG, WEBP files supported."
+              />
 
               {/* Action Buttons */}
               <div className="pt-6 border-t border-slate-100 flex justify-end gap-3 shrink-0">
@@ -456,7 +459,7 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary" className="px-5 py-2.5 text-xs">
-                  {petToEdit ? 'Save Changes' : 'Add Kitten'}
+                  {petToEdit ? 'Save Changes' : 'Add Pet'}
                 </Button>
               </div>
             </form>

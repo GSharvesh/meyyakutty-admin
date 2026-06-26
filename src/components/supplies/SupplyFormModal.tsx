@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '@/context/AdminContext';
 import { Product } from '@/types';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface SupplyFormModalProps {
   isOpen: boolean;
@@ -13,84 +14,134 @@ interface SupplyFormModalProps {
   productToEdit?: Product | null;
 }
 
-const PRESET_MOCK_IMAGES = [
-  'https://images.unsplash.com/photo-1608454367599-c1139e654784?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1570824104453-508955ab713e?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1626880846714-d7542f7c92eb?w=600&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&auto=format&fit=crop&q=80'
-];
+const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish', string[]> = {
+  Dog: [
+    'Dry Food', 'Wet Food', 'Puppy Food', 'Adult Food', 'Senior Food',
+    'Treats', 'Toys', 'Grooming', 'Collars', 'Leashes', 'Harnesses',
+    'Beds', 'Bowls', 'Health Care', 'Accessories'
+  ],
+  Cat: [
+    'Dry Food', 'Wet Food', 'Kitten Food', 'Treats', 'Toys',
+    'Cat Litter', 'Litter Box', 'Scratching Posts', 'Grooming',
+    'Beds', 'Bowls', 'Accessories', 'Health Care'
+  ],
+  Bird: [
+    'Bird Food', 'Seeds', 'Pellets', 'Cages', 'Feeders', 'Water Feeders',
+    'Perches', 'Swings', 'Toys', 'Nest Boxes', 'Accessories', 'Health Care'
+  ],
+  Fish: [
+    'Fish Food', 'Aquarium', 'Filters', 'Air Pumps', 'Heaters', 'LED Lights',
+    'Gravel', 'Decorative Plants', 'Decorations', 'Water Conditioner',
+    'Cleaning Tools', 'Accessories'
+  ]
+};
 
 export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClose, productToEdit }) => {
   const { addProduct, updateProduct } = useAdmin();
 
+  // Form Fields
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [petType, setPetType] = useState<'Dog' | 'Cat' | 'Bird' | 'Fish'>('Dog');
+  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
+  const [sku, setSku] = useState('');
   const [stock, setStock] = useState('');
-  const [images, setImages] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [status, setStatus] = useState<'Active' | 'Out of Stock' | 'Draft'>('Active');
 
+  // Discount Pricing states
+  const [discountAvailable, setDiscountAvailable] = useState<'Yes' | 'No'>('No');
+  const [discountPrice, setDiscountPrice] = useState('');
+
+  // Images state (local upload)
+  const [images, setImages] = useState<string[]>([]);
+
+  // Load product to edit
   useEffect(() => {
     if (productToEdit) {
       setName(productToEdit.name);
       setBrand(productToEdit.brand);
+      setPetType(productToEdit.petType || 'Dog');
       setCategory(productToEdit.category);
       setDescription(productToEdit.description);
       setPrice(productToEdit.price.toString());
-      setDiscount(productToEdit.discount ? productToEdit.discount.toString() : '');
+      setDiscountPrice(productToEdit.discountPrice ? productToEdit.discountPrice.toString() : '');
+      setDiscountAvailable(productToEdit.discountPrice ? 'Yes' : 'No');
       setStock(productToEdit.stock.toString());
-      setImages(productToEdit.images);
+      setSku(productToEdit.sku || '');
+      setStatus(productToEdit.status || 'Active');
+      setImages(productToEdit.images || []);
     } else {
       setName('');
       setBrand('');
-      setCategory('Food');
+      setPetType('Dog');
+      setCategory(CATEGORIES_BY_PET_TYPE['Dog'][0]);
       setDescription('');
       setPrice('');
-      setDiscount('');
+      setDiscountPrice('');
+      setDiscountAvailable('No');
       setStock('');
-      setImages([PRESET_MOCK_IMAGES[Math.floor(Math.random() * PRESET_MOCK_IMAGES.length)]]);
+      setSku('');
+      setStatus('Active');
+      setImages([]);
     }
   }, [productToEdit, isOpen]);
 
-  const addImage = () => {
-    if (newImageUrl.trim()) {
-      setImages([...images, newImageUrl.trim()]);
-      setNewImageUrl('');
+  // Adjust categories list when pet type changes
+  useEffect(() => {
+    if (!productToEdit || productToEdit.petType !== petType) {
+      const cats = CATEGORIES_BY_PET_TYPE[petType];
+      if (cats && cats.length > 0) {
+        setCategory(cats[0]);
+      }
     }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
-
-  const handleSelectPresetImage = (url: string) => {
-    if (!images.includes(url)) {
-      setImages([...images, url]);
-    }
-  };
+  }, [petType]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !brand || !price || !stock) {
+    if (!name || !brand || !price || stock === '' || !sku || !category) {
       alert('Please fill in all required fields.');
       return;
+    }
+
+    const parsedStock = parseInt(stock, 10);
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      alert('Please enter a valid Available Stock Count.');
+      return;
+    }
+
+    if (discountAvailable === 'Yes' && !discountPrice) {
+      alert('Please enter the discount price.');
+      return;
+    }
+
+    if (images.length === 0) {
+      alert('Please upload at least 1 image.');
+      return;
+    }
+
+    // Auto determine status
+    let resolvedStatus = status;
+    if (parsedStock === 0) {
+      resolvedStatus = 'Out of Stock';
+    } else if (resolvedStatus === 'Out of Stock') {
+      resolvedStatus = 'Active';
     }
 
     const payload = {
       name,
       brand,
+      petType,
       category,
       description,
       price: parseFloat(price),
-      discount: discount ? parseFloat(discount) : undefined,
-      stock: parseInt(stock, 10),
-      images: images.length > 0 ? images : [PRESET_MOCK_IMAGES[0]]
+      discountPrice: discountAvailable === 'Yes' ? parseFloat(discountPrice) : undefined,
+      stock: parsedStock,
+      sku,
+      status: resolvedStatus,
+      images
     };
 
     if (productToEdit) {
@@ -127,9 +178,9 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
             <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-extrabold text-slate-800 text-lg">
-                  {productToEdit ? `Edit Product: ${productToEdit.name}` : 'Add New Pet Product'}
+                  {productToEdit ? `Edit Supply: ${productToEdit.name}` : 'Add New Supply Product'}
                 </h3>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">Register kitten supplies in catalog</p>
+                <p className="text-xs text-slate-400 font-semibold mt-0.5">Register supplies in catalog</p>
               </div>
               <button
                 onClick={onClose}
@@ -166,14 +217,30 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
                     required
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    placeholder="e.g. Royal Canin, Meeya Kutty"
+                    placeholder="e.g. Royal Canin"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Row 2: Category, Price, Discount, Stock */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Row 2: Pet Type and Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Pet Type <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={petType}
+                    onChange={(e) => setPetType(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="Dog">Dog</option>
+                    <option value="Cat">Cat</option>
+                    <option value="Bird">Bird</option>
+                    <option value="Fish">Fish</option>
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Category <span className="text-primary">*</span>
@@ -183,58 +250,112 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   >
-                    <option value="Food">Food</option>
-                    <option value="Litter">Litter</option>
-                    <option value="Toys">Toys</option>
-                    <option value="Furniture">Furniture</option>
-                    <option value="Health">Health</option>
-                    <option value="Accessories">Accessories</option>
+                    {CATEGORIES_BY_PET_TYPE[petType]?.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
                   </select>
                 </div>
+              </div>
 
+              {/* Row 3: SKU, Stock, and Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Price (INR) <span className="text-primary">*</span>
+                    SKU <span className="text-primary">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="45"
+                    value={sku}
+                    onChange={(e) => setSku(e.target.value)}
+                    placeholder="e.g. RC-KIT-400G"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Discount (INR)
-                  </label>
-                  <input
-                    type="number"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                    placeholder="5"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Stock Quantity <span className="text-primary">*</span>
+                    Available Stock Count <span className="text-primary">*</span>
                   </label>
                   <input
                     type="number"
                     required
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
-                    placeholder="25"
+                    placeholder="e.g. 25"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Status <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Row 3: Description */}
+              {/* Pricing details */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Selling Price (INR) <span className="text-primary">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="e.g. 45"
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Discount Available? <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={discountAvailable}
+                    onChange={(e) => {
+                      setDiscountAvailable(e.target.value as 'Yes' | 'No');
+                      if (e.target.value === 'No') setDiscountPrice('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                  >
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+
+                {discountAvailable === 'Yes' && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Discount Price (INR) <span className="text-primary">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={discountPrice}
+                      onChange={(e) => setDiscountPrice(e.target.value)}
+                      placeholder="e.g. 39"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Row 4: Description */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
                 <textarea
@@ -246,68 +367,15 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
                 />
               </div>
 
-              {/* Row 4: Multiple Image URLs */}
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Product Images
-                </label>
-
-                {/* Images preview grid */}
-                {images.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {images.map((img, idx) => (
-                      <div key={idx} className="relative w-16 h-16 rounded-xl border overflow-hidden group bg-slate-100">
-                        <img src={img} className="w-full h-full object-cover" alt="Product preview" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(idx)}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Image input link */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Enter custom product image URL"
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={addImage}
-                    className="px-3 py-2 text-xs rounded-xl"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-
-                {/* Preset helpers */}
-                <div className="pt-2">
-                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    Click to quick-insert high quality mock products images
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESET_MOCK_IMAGES.map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectPresetImage(url)}
-                        className="w-10 h-10 rounded-lg border hover:border-primary overflow-hidden shrink-0 transition"
-                      >
-                        <img src={url} className="w-full h-full object-cover" alt="preset selection" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              {/* Modern Image Upload System */}
+              <ImageUploader
+                images={images}
+                onChange={setImages}
+                maxImages={1}
+                minImages={1}
+                label="Product Image"
+                helperText="Upload exactly 1 product photo. PNG, JPG, JPEG, WEBP files supported."
+              />
 
               {/* Action Buttons */}
               <div className="pt-6 border-t border-slate-100 flex justify-end gap-3 shrink-0">

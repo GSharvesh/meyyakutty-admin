@@ -25,6 +25,8 @@ export interface Pet {
   images: string[];
   status: 'Available' | 'Reserved' | 'Sold';
   createdAt: string;
+  faceType?: string;
+  featured?: boolean;
 }
 
 export interface Reservation {
@@ -44,13 +46,33 @@ export interface Product {
   id: string;
   name: string;
   brand: string;
+  petType: 'Dog' | 'Cat' | 'Bird' | 'Fish';
   category: string;
   description: string;
   price: number;
-  discount?: number;
+  discountPrice?: number;
   stock: number;
   images: string[];
-  status: 'In Stock' | 'Low Stock' | 'Out Of Stock';
+  sku: string;
+  status: 'Active' | 'Out of Stock' | 'Draft';
+}
+
+export interface Offer {
+  id: string;
+  title: string;
+  description: string;
+  images: string[];
+  discountType: 'Percentage' | 'Fixed Amount';
+  discountValue: number;
+  startDate: string;
+  endDate: string;
+  status: 'Active' | 'Scheduled' | 'Expired';
+  showOnHomePage: boolean;
+  featuredOffer: boolean;
+  applicablePetTypes: ('Dog' | 'Cat' | 'Bird' | 'Fish' | 'Small Animals')[];
+  applicableSupplyCategories: string[];
+  enabled: boolean;
+  createdAt?: string;
 }
 
 export interface OrderItem {
@@ -81,6 +103,7 @@ export interface Order {
   date: string;
   paymentMethod: string;
   timeline: OrderTimeline[];
+  stockReduced?: boolean;
 }
 
 export interface Customer {

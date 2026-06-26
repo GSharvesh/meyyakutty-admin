@@ -166,11 +166,6 @@ export const DashboardCards: React.FC = () => {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-semibold">
             <span>{card.desc}</span>
-            {card.isCurrency && (
-              <span className="text-emerald-600 flex items-center gap-0.5">
-                +18.4%
-              </span>
-            )}
           </div>
         </Card>
       ))}

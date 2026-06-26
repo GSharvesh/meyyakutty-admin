@@ -21,7 +21,8 @@ import {
   BarChart3,
   Settings,
   Shield,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -77,6 +78,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Orders', href: '/orders', icon: ClipboardList, badge: pendingOrders },
     { name: 'Pets', href: '/pets', icon: PawPrint },
+    { name: 'Supplies', href: '/supplies', icon: ShoppingBag },
     { name: 'Notifications', href: '/notifications', icon: Bell, badge: unreadCount },
     { name: 'Profile', href: '/settings', icon: User }
   ];
@@ -86,6 +88,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { name: 'Pets', href: '/pets', icon: PawPrint },
     { name: 'Reservations', href: '/reservations', icon: CalendarDays, badge: pendingReservations },
     { name: 'Pet Supplies', href: '/supplies', icon: ShoppingBag },
+    { name: 'Daily Offers', href: '/offers', icon: Sparkles },
     { name: 'Inventory', href: '/inventory', icon: Boxes },
     { name: 'Orders', href: '/orders', icon: ClipboardList, badge: pendingOrders },
     { name: 'Customers', href: '/customers', icon: Users },
