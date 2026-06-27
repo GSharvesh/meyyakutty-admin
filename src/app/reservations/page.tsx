@@ -36,7 +36,6 @@ export default function ReservationsPage() {
   const filteredReservations = reservations.filter(res => {
     const matchSearch =
       res.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      res.petName.toLowerCase().includes(search.toLowerCase()) ||
       res.id.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || res.status === statusFilter;
     return matchSearch && matchStatus;
@@ -60,7 +59,7 @@ export default function ReservationsPage() {
   const handleContactCustomer = (res: Reservation) => {
     // Generate WhatsApp click-to-chat API URL with custom message
     const cleanPhone = res.customerPhone.replace(/[^0-9]/g, '');
-    const message = `Hello ${res.customerName}, this is Meeya Kutty Pet Shop. Regarding your reservation for ${res.petName} (${res.petBreed}), we'd like to coordinate the details!`;
+    const message = `Hello ${res.customerName}, this is Meeya Kutty Pet Shop. Regarding your reservation for ${res.petBreed}, we'd like to coordinate the details!`;
     const encodedMsg = encodeURIComponent(message);
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
     
@@ -96,7 +95,7 @@ export default function ReservationsPage() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search ID, customer name, or pet name..."
+                placeholder="Search ID, customer name, or breed..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-xl py-2 px-9 text-xs outline-none focus:bg-white focus:border-primary/20 transition"
@@ -147,8 +146,8 @@ export default function ReservationsPage() {
                         <div className="text-[10px] text-slate-400 font-semibold">{res.customerPhone}</div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-700">{res.petName}</div>
-                        <div className="text-[10px] text-slate-400">{res.petBreed}</div>
+                        <div className="font-bold text-slate-800">{res.petBreed}</div>
+                        <div className="text-[10px] text-slate-400">ID: {res.petId}</div>
                       </td>
                       <td className="py-4 px-4 text-right font-extrabold text-slate-700">
                         ₹{res.petPrice.toLocaleString()}

@@ -154,8 +154,7 @@ export const DashboardWidgets: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-slate-800">{res.petName}</span>
-                    <span className="text-[10px] text-slate-400 font-semibold">({res.petBreed})</span>
+                    <span className="text-xs font-extrabold text-slate-800">{res.petBreed}</span>
                     <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
                       res.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
                       res.status === 'Completed' ? 'bg-blue-100 text-blue-700' :
@@ -274,7 +273,7 @@ export const DashboardWidgets: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 italic line-clamp-2 leading-relaxed">
-                    "{rev.review}"
+                    &quot;{rev.review}&quot;
                   </p>
                   <div className="flex justify-end gap-2 mt-1">
                     <Button

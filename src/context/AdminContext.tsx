@@ -85,13 +85,13 @@ interface AdminContextProps {
 }
 
 const defaultSettings: StoreSettings = {
-  shopName: 'Meeya Kutty Pet Shop',
-  phone: '+91 98765 43210',
-  email: 'info@meeyakutty.com',
-  address: 'No. 24, Pet Commerce Street, Chennai, India',
-  whatsapp: 'https://wa.me/919876543210',
-  instagram: 'https://instagram.com/meeyakutty',
-  mapsLink: 'https://maps.google.com/?q=Meeya+Kutty+Pet+Shop',
+  shopName: 'MEEYAKUTTY',
+  phone: '',
+  email: 'meyyakuttyoffice@gmail.com',
+  address: '',
+  whatsapp: 'https://wa.me/917200271113',
+  instagram: 'https://www.instagram.com/meyyakutty',
+  mapsLink: 'https://maps.app.goo.gl/9WTib7H5PkxmBgyN8',
   theme: 'light',
   notificationsEnabled: true
 };
@@ -177,7 +177,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } else {
         // Automatically log in as Owner Admin by default for developer evaluation
-        const defaultUser: AdminUser = { username: 'owner_admin', role: 'owner', name: 'Meeya Kutty', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
+        const defaultUser: AdminUser = { username: 'owner_admin', role: 'owner', name: 'Meeya Kutty', avatar: '/logo.png' };
         userToSet = defaultUser;
         localStorage.setItem('mk_current_user', JSON.stringify(defaultUser));
       }
@@ -223,11 +223,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const login = (username: string, role: AdminRole): boolean => {
     let name = 'Meeya Kutty';
-    let avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+    let avatar = '/logo.png';
     
     if (role === 'super_admin') {
       name = 'Dev (Super Admin)';
-      avatar = 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100';
+      avatar = '/logo.png';
     } else if (role === 'owner') {
       name = 'Meeya Kutty';
     }
@@ -259,7 +259,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       saveToStorage('mk_pets', updated);
       return updated;
     });
-    logActivity('Add Pet', `Added new pet: ${newPet.name} (${newPet.breed})`);
+    logActivity('Add Pet', `Added new pet: ${newPet.breed} (${newPet.category})`);
   };
 
   const updatePet = (id: string, updatedFields: Partial<Pet>) => {
@@ -357,7 +357,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       date: new Date().toISOString(),
       paymentMethod: 'Store Payment',
       items: [
-        { productId: res.petId, name: `${res.petName} (${res.petBreed})`, quantity: 1, price: res.petPrice, type: 'pet' }
+        { productId: res.petId, name: `${res.petBreed}`, quantity: 1, price: res.petPrice, type: 'pet' }
       ],
       timeline: [
         { status: 'Processing', date: new Date().toISOString(), description: 'Reservation converted to Direct Sale.' },

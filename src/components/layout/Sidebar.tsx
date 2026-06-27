@@ -174,7 +174,7 @@ export const Sidebar: React.FC = () => {
       <div className="p-4 border-t border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-3">
           <img
-            src={currentUser.avatar}
+            src={currentUser.avatar || '/logo.png'}
             alt={currentUser.name}
             className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
           />

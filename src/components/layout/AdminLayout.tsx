@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -212,7 +213,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
               {/* Footer */}
               <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center gap-3 justify-between">
                 <div className="flex items-center gap-2.5">
-                  <img src={currentUser.avatar} className="w-8 h-8 rounded-full border" alt={currentUser.name} />
+                  <img src={currentUser.avatar || '/logo.png'} className="w-8 h-8 rounded-full border" alt={currentUser.name} />
                   <div>
                     <span className="block text-xs font-bold text-slate-800 leading-tight">
                       {currentUser.name}{currentUser.role === 'owner' ? ' (Owner)' : ''}

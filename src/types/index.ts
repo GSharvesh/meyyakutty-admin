@@ -9,7 +9,6 @@ export interface AdminUser {
 
 export interface Pet {
   id: string;
-  name: string;
   category: string;
   breed: string;
   gender: 'Male' | 'Female';
@@ -35,7 +34,6 @@ export interface Reservation {
   customerName: string;
   customerPhone: string;
   petId: string;
-  petName: string;
   petBreed: string;
   petPrice: number;
   date: string;
@@ -46,7 +44,7 @@ export interface Product {
   id: string;
   name: string;
   brand: string;
-  petType: 'Dog' | 'Cat' | 'Bird' | 'Fish';
+  petType: 'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others';
   category: string;
   description: string;
   price: number;
@@ -69,7 +67,7 @@ export interface Offer {
   status: 'Active' | 'Scheduled' | 'Expired';
   showOnHomePage: boolean;
   featuredOffer: boolean;
-  applicablePetTypes: ('Dog' | 'Cat' | 'Bird' | 'Fish' | 'Small Animals')[];
+  applicablePetTypes: ('Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others')[];
   applicableSupplyCategories: string[];
   enabled: boolean;
   createdAt?: string;

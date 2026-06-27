@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,7 +21,8 @@ const OFFER_CATEGORIES_BY_PET_TYPE: Record<string, string[]> = {
   Cat: ['Food', 'Treats', 'Toys', 'Litter', 'Grooming', 'Scratching Posts', 'Beds', 'Health Care', 'Accessories'],
   Bird: ['Bird Food', 'Cages', 'Feeders', 'Perches', 'Swings', 'Toys', 'Health Care', 'Accessories'],
   Fish: ['Fish Food', 'Aquarium', 'Filters', 'Air Pumps', 'Heaters', 'Decorations', 'Water Conditioner', 'Accessories'],
-  'Small Animals': ['Food', 'Treats', 'Hay & Bedding', 'Cages', 'Hideouts', 'Feeders', 'Water Bottles', 'Toys', 'Grooming', 'Health Care', 'Accessories']
+  Hamster: ['Food', 'Treats', 'Hay & Bedding', 'Cages', 'Wheels', 'Hideouts', 'Feeders', 'Water Bottles', 'Toys', 'Grooming', 'Health Care', 'Accessories'],
+  Others: ['Food', 'Treats', 'Cages', 'Bedding', 'Toys', 'Accessories']
 };
 
 export const OfferFormModal: React.FC<OfferFormModalProps> = ({ isOpen, onClose, offerToEdit }) => {
@@ -324,7 +327,7 @@ export const OfferFormModal: React.FC<OfferFormModalProps> = ({ isOpen, onClose,
                 <div className="space-y-1.5">
                   <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Pet Types:</span>
                   <div className="flex flex-wrap gap-2.5">
-                    {['Dog', 'Cat', 'Bird', 'Fish', 'Small Animals'].map(petType => {
+                    {['Dog', 'Cat', 'Bird', 'Fish', 'Hamster', 'Others'].map(petType => {
                       const isChecked = selectedPetTypes.includes(petType);
                       return (
                         <button

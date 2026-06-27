@@ -70,7 +70,11 @@ function SettingsContent() {
       setPhone(storeSettings.phone);
       setEmail(storeSettings.email);
       setAddress(storeSettings.address);
-      setWhatsapp(storeSettings.whatsapp);
+      
+      const waLink = storeSettings.whatsapp || '';
+      const match = waLink.match(/\d{10}$/);
+      setWhatsapp(match ? match[0] : waLink);
+      
       setInstagram(storeSettings.instagram);
       setMapsLink(storeSettings.mapsLink);
       setTheme(storeSettings.theme);
@@ -93,12 +97,30 @@ function SettingsContent() {
 
   const handleStoreSave = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!shopName.trim()) {
+      alert('Shop Name is required.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    const whatsappDigits = whatsapp.replace(/[^0-9]/g, '');
+    if (whatsappDigits.length !== 10) {
+      alert('WhatsApp Number must be exactly 10 digits.');
+      return;
+    }
+
     const updated: StoreSettings = {
       shopName,
       phone,
       email,
       address,
-      whatsapp,
+      whatsapp: `https://wa.me/91${whatsappDigits}`,
       instagram,
       mapsLink,
       theme,
@@ -220,11 +242,13 @@ function SettingsContent() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-slate-600">WhatsApp Link</label>
+                  <label className="text-slate-650">WhatsApp Number (10 digits) <span className="text-primary">*</span></label>
                   <input
                     type="text"
+                    required
                     value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
+                    onChange={(e) => setWhatsapp(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="e.g. 7200271113"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-700 font-medium outline-none focus:bg-white focus:border-primary/20"
                   />
                 </div>

@@ -174,7 +174,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMobileMenuToggle }) => {
             className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 transition cursor-pointer text-left"
           >
             <img
-              src={currentUser.avatar}
+              src={currentUser.avatar || '/logo.png'}
               alt={currentUser.name}
               className="w-8 h-8 rounded-lg object-cover"
             />

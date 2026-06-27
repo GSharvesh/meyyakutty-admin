@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -18,7 +19,6 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
   const { addPet, updatePet } = useAdmin();
 
   // Form Fields
-  const [name, setName] = useState('');
   const [category, setCategory] = useState('Cats');
   const [breed, setBreed] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
@@ -30,7 +30,7 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
 
   // Discount Available pricing states
   const [discountAvailable, setDiscountAvailable] = useState<'Yes' | 'No'>('No');
-  const [discountPrice, setDiscountPrice] = useState('');
+  const [discountPercent, setDiscountPercent] = useState('');
 
   // Face Type states
   const [faceType, setFaceType] = useState('');
@@ -50,7 +50,6 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
 
   useEffect(() => {
     if (petToEdit) {
-      setName(petToEdit.name);
       setCategory(petToEdit.category);
       setBreed(petToEdit.breed);
       setGender(petToEdit.gender);
@@ -59,8 +58,14 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       setDescription(petToEdit.description);
       setHealthDetails(petToEdit.healthDetails || '');
       setPrice(petToEdit.price.toString());
-      setDiscountPrice(petToEdit.discountPrice ? petToEdit.discountPrice.toString() : '');
-      setDiscountAvailable(petToEdit.discountPrice ? 'Yes' : 'No');
+      if (petToEdit.discountPrice) {
+        setDiscountAvailable('Yes');
+        const calculatedPercent = Math.round(((petToEdit.price - petToEdit.discountPrice) / petToEdit.price) * 100);
+        setDiscountPercent(calculatedPercent.toString());
+      } else {
+        setDiscountAvailable('No');
+        setDiscountPercent('');
+      }
       setFaceType(petToEdit.faceType || '');
       setVaccinated(petToEdit.vaccinationDetails ? 'Yes' : 'No');
       setVaccinationDetails(petToEdit.vaccinationDetails || '');
@@ -68,7 +73,6 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       setStatus(petToEdit.status);
       setImages(petToEdit.images || []);
     } else {
-      setName('');
       setCategory('Cats');
       setBreed('');
       setGender('Male');
@@ -77,8 +81,8 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       setDescription('');
       setHealthDetails('');
       setPrice('');
-      setDiscountPrice('');
       setDiscountAvailable('No');
+      setDiscountPercent('');
       setFaceType('');
       setVaccinated('No');
       setVaccinationDetails('');
@@ -89,17 +93,38 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
   }, [petToEdit, isOpen]);
 
   // Adjust category dependencies
-  useEffect(() => {
-    // If category is not Cats/Dogs, reset face type
-    if (category !== 'Cats' && category !== 'Dogs') {
+  const handleCategoryChange = (newCat: string) => {
+    setCategory(newCat);
+    if (newCat !== 'Cats' && newCat !== 'Dogs') {
       setFaceType('');
     }
-  }, [category]);
+  };
+
+  const handleDiscountPercentChange = (val: string) => {
+    const clean = val.replace(/[^0-9]/g, '');
+    if (clean === '') {
+      setDiscountPercent('');
+      return;
+    }
+    const num = parseInt(clean, 10);
+    if (num > 100) {
+      setDiscountPercent('100');
+    } else if (num < 1) {
+      setDiscountPercent('1');
+    } else {
+      setDiscountPercent(num.toString());
+    }
+  };
+
+  const sellingPrice = parseFloat(price) || 0;
+  const percent = parseFloat(discountPercent) || 0;
+  const discountAmt = Math.round(sellingPrice * (percent / 100));
+  const finalPrice = Math.max(0, Math.round(sellingPrice - discountAmt));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !breed || !age || !color || !price) {
+    if (!breed || !age || !color || !price) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -109,9 +134,14 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       return;
     }
 
-    if (discountAvailable === 'Yes' && !discountPrice) {
-      alert('Please enter the discount price.');
-      return;
+    let calculatedDiscountPrice: number | undefined = undefined;
+    if (discountAvailable === 'Yes') {
+      const percentVal = parseInt(discountPercent, 10);
+      if (isNaN(percentVal) || percentVal < 1 || percentVal > 100) {
+        alert('Please enter a valid discount percentage (1–100%).');
+        return;
+      }
+      calculatedDiscountPrice = finalPrice;
     }
 
     if (vaccinated === 'Yes' && !vaccinationDetails.trim()) {
@@ -125,7 +155,6 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
     }
 
     const payload = {
-      name,
       category,
       breed,
       gender,
@@ -135,7 +164,7 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
       healthDetails,
       vaccinationDetails: vaccinated === 'Yes' ? vaccinationDetails : '',
       price: parseFloat(price),
-      discountPrice: discountAvailable === 'Yes' ? parseFloat(discountPrice) : undefined,
+      discountPrice: calculatedDiscountPrice,
       faceType: ['Cats', 'Dogs'].includes(category) ? faceType : undefined,
       featured: featured === 'Yes',
       images,
@@ -176,7 +205,7 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
             <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-extrabold text-slate-800 text-lg">
-                  {petToEdit ? `Edit Pet Details: ${petToEdit.name}` : 'Add New Pet'}
+                  {petToEdit ? `Edit Pet Details: ${petToEdit.breed}` : 'Add New Pet'}
                 </h3>
                 <p className="text-xs text-slate-400 font-semibold mt-0.5">Register a premium breed pet</p>
               </div>
@@ -190,42 +219,26 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
 
             {/* Form Scroll Body */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Row 1: Name and Category */}
+              {/* Row 1: Category and Breed */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Pet Name <span className="text-primary">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Milo"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Category <span className="text-primary">*</span>
                   </label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   >
                     <option value="Cats">Cat</option>
                     <option value="Dogs">Dog</option>
                     <option value="Birds">Bird</option>
                     <option value="Fish">Fish</option>
-                    <option value="Small Animals">Small Animal</option>
+                    <option value="Hamster">Hamster</option>
+                    <option value="Others">Others</option>
                   </select>
                 </div>
-              </div>
 
-              {/* Row 2: Breed, Gender, Age, Color */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Breed <span className="text-primary">*</span>
@@ -239,7 +252,10 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   />
                 </div>
+              </div>
 
+              {/* Row 2: Gender, Age, Color */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Gender <span className="text-primary">*</span>
@@ -301,51 +317,73 @@ export const PetFormModal: React.FC<PetFormModalProps> = ({ isOpen, onClose, pet
               )}
 
               {/* Pricing Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Selling Price (INR) <span className="text-primary">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 850"
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Discount Available? <span className="text-primary">*</span>
-                  </label>
-                  <select
-                    value={discountAvailable}
-                    onChange={(e) => {
-                      setDiscountAvailable(e.target.value as 'Yes' | 'No');
-                      if (e.target.value === 'No') setDiscountPrice('');
-                    }}
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
-                  >
-                    <option value="No">No</option>
-                    <option value="Yes">Yes</option>
-                  </select>
-                </div>
-
-                {discountAvailable === 'Yes' && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Discount Price (INR) <span className="text-primary">*</span>
+                      Original Price (₹) <span className="text-primary">*</span>
                     </label>
                     <input
                       type="number"
                       required
-                      value={discountPrice}
-                      onChange={(e) => setDiscountPrice(e.target.value)}
-                      placeholder="e.g. 799"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. 20000"
                       className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Discount Available? <span className="text-primary">*</span>
+                    </label>
+                    <select
+                      value={discountAvailable}
+                      onChange={(e) => {
+                        setDiscountAvailable(e.target.value as 'Yes' | 'No');
+                        if (e.target.value === 'No') setDiscountPercent('');
+                      }}
+                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
+                  </div>
+                </div>
+
+                {discountAvailable === 'Yes' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-200/60">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Discount Percentage (%) <span className="text-primary">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={discountPercent}
+                        onChange={(e) => handleDiscountPercentChange(e.target.value)}
+                        placeholder="1 - 100"
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Discount Amount (₹)
+                      </label>
+                      <div className="w-full bg-slate-100/80 border border-slate-200/60 rounded-xl py-2.5 px-3.5 text-sm text-slate-500 font-bold leading-normal">
+                        ₹{discountAmt.toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Final Price (₹)
+                      </label>
+                      <div className="w-full bg-slate-100/80 border border-slate-200/60 rounded-xl py-2.5 px-3.5 text-sm text-slate-800 font-extrabold leading-normal">
+                        ₹{finalPrice.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

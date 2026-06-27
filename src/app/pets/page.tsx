@@ -14,11 +14,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  CheckCircle,
-  Eye,
-  Bookmark,
-  DollarSign,
-  Heart,
   ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,7 +25,7 @@ const getCategoryIcon = (category: string) => {
   if (c.includes('dog')) return '🐶';
   if (c.includes('bird')) return '🐦';
   if (c.includes('fish')) return '🐠';
-  if (c.includes('small animal')) return '🐹';
+  if (c.includes('hamster')) return '🐹';
   return '🐾';
 };
 
@@ -40,7 +35,8 @@ const getCategoryDisplayName = (category: string) => {
   if (c === 'dogs') return 'Dog';
   if (c === 'birds') return 'Bird';
   if (c === 'fish') return 'Fish';
-  if (c === 'small animals') return 'Small Animal';
+  if (c === 'hamster') return 'Hamster';
+  if (c === 'others') return 'Others';
   return category;
 };
 
@@ -85,7 +81,7 @@ export default function PetsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
 
-  const categories = ['All', 'Cats', 'Dogs', 'Birds', 'Fish', 'Small Animals'];
+  const categories = ['All', 'Cats', 'Dogs', 'Birds', 'Fish', 'Hamster', 'Others'];
   const statuses = ['All', 'Available', 'Reserved', 'Sold'];
 
   const summaryContainerRef = useRef<HTMLDivElement>(null);
@@ -136,7 +132,6 @@ export default function PetsPage() {
   const filteredPets = pets
     .filter(pet => {
       const matchSearch =
-        pet.name.toLowerCase().includes(search.toLowerCase()) ||
         pet.breed.toLowerCase().includes(search.toLowerCase()) ||
         pet.category.toLowerCase().includes(search.toLowerCase()) ||
         pet.status.toLowerCase().includes(search.toLowerCase());
@@ -145,7 +140,7 @@ export default function PetsPage() {
       return matchSearch && matchCategory && matchStatus;
     })
     .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'name') return a.breed.localeCompare(b.breed);
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -160,7 +155,7 @@ export default function PetsPage() {
       case 'Sold':
         return 'bg-slate-200 text-slate-700 border-slate-300';
       default:
-        return 'bg-slate-100 text-slate-600';
+        return 'bg-slate-100 text-slate-650';
     }
   };
 
@@ -221,7 +216,7 @@ export default function PetsPage() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search name, breed, or color..."
+                placeholder="Search breed, color, or category..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-xl py-2 px-9 text-xs outline-none focus:bg-white focus:border-primary/20 transition-all"
@@ -239,7 +234,7 @@ export default function PetsPage() {
                   className="bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl py-2 px-3 focus:bg-white outline-none cursor-pointer"
                 >
                   <option value="newest">Newest Registered</option>
-                  <option value="name">Name (A-Z)</option>
+                  <option value="name">Breed (A-Z)</option>
                   <option value="price-asc">Price (Low to High)</option>
                   <option value="price-desc">Price (High to Low)</option>
                 </select>
@@ -283,7 +278,7 @@ export default function PetsPage() {
                           : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      {cat} ({availableCount})
+                      {getCategoryDisplayName(cat)} ({availableCount})
                     </button>
                   );
                 })}
@@ -317,8 +312,8 @@ export default function PetsPage() {
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-white border border-slate-200 rounded-3xl text-center shadow-sm max-w-md mx-auto">
             <span className="text-4xl mb-3">🐾</span>
             <h3 className="font-extrabold text-slate-800 text-sm">No pets added yet.</h3>
-            <p className="text-xs text-slate-450 font-semibold mt-1.5 max-w-xs">
-              Click Add New to get started. Add dogs, cats, birds, or fish to your store.
+            <p className="text-xs text-slate-455 font-semibold mt-1.5 max-w-xs">
+              Click Add New to get started. Add dogs, cats, birds, fish, or hamsters to your store.
             </p>
             <Button
               onClick={handleAddNewClick}
@@ -346,7 +341,7 @@ export default function PetsPage() {
                     <div className="h-56 relative w-full overflow-hidden bg-slate-100">
                       <img
                         src={pet.images[0]}
-                        alt={pet.name}
+                        alt={pet.breed}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {/* Gender Badge */}
@@ -374,13 +369,13 @@ export default function PetsPage() {
                     <div className="p-5 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-extrabold text-slate-800 text-base truncate">{pet.name}</h3>
+                          <h3 className="font-extrabold text-slate-800 text-base truncate">{pet.breed}</h3>
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${getStatusBadge(pet.status)}`}>
                             {pet.status}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-slate-400 font-semibold mt-1">
-                          <span>{pet.breed}</span>
+                          <span>{getCategoryDisplayName(pet.category)}</span>
                           <span>{pet.age}</span>
                         </div>
                         <p className="text-xs text-slate-500 mt-3 line-clamp-2 leading-relaxed">
@@ -422,7 +417,7 @@ export default function PetsPage() {
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm(`Are you sure you want to remove ${pet.name}?`)) deletePet(pet.id);
+                              if (confirm(`Are you sure you want to remove this ${pet.breed}?`)) deletePet(pet.id);
                             }}
                             className="text-xs font-bold text-slate-400 hover:text-red-500 transition flex items-center gap-1 cursor-pointer"
                           >
@@ -444,9 +439,9 @@ export default function PetsPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider bg-slate-50/55">
                     <th className="py-3 px-5 font-semibold">Image</th>
-                    <th className="py-3 px-4 font-semibold">Pet Name</th>
-                    <th className="py-3 px-4 font-semibold">Category</th>
                     <th className="py-3 px-4 font-semibold">Breed</th>
+                    <th className="py-3 px-4 font-semibold">Category</th>
+                    <th className="py-3 px-4 font-semibold">Color</th>
                     <th className="py-3 px-4 font-semibold text-center">Gender</th>
                     <th className="py-3 px-4 font-semibold">Age</th>
                     <th className="py-3 px-4 font-semibold">Status</th>
@@ -460,17 +455,17 @@ export default function PetsPage() {
                       <td className="py-3.5 px-5">
                         <img
                           src={pet.images[0]}
-                          alt={pet.name}
+                          alt={pet.breed}
                           className="w-10 h-10 rounded-lg object-cover border border-slate-100"
                         />
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-800">{pet.name}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-800">{pet.breed}</td>
                       <td className="py-3.5 px-4">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-slate-50 border border-slate-100 text-slate-700 rounded-full font-bold text-[10px]">
                           {getCategoryIcon(pet.category)} {getCategoryDisplayName(pet.category)}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-500 font-medium">{pet.breed}</td>
+                      <td className="py-3.5 px-4 text-slate-500 font-medium">{pet.color}</td>
                       <td className="py-3.5 px-4 text-center">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${pet.gender === 'Male' ? 'bg-blue-500' : 'bg-pink-500'}`}>
                           {pet.gender}
@@ -496,7 +491,7 @@ export default function PetsPage() {
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm(`Remove ${pet.name}?`)) deletePet(pet.id);
+                              if (confirm(`Remove ${pet.breed}?`)) deletePet(pet.id);
                             }}
                             className="p-1 text-slate-400 hover:text-red-500 transition cursor-pointer"
                             title="Delete"

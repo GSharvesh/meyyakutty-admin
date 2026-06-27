@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish', string[]> = {
+const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others', string[]> = {
   Dog: [
     'Dry Food', 'Wet Food', 'Puppy Food', 'Adult Food', 'Senior Food',
     'Treats', 'Toys', 'Grooming', 'Collars', 'Leashes', 'Harnesses',
@@ -38,6 +38,15 @@ const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish', string[]> 
     'Fish Food', 'Aquarium', 'Filters', 'Air Pumps', 'Heaters', 'LED Lights',
     'Gravel', 'Decorative Plants', 'Decorations', 'Water Conditioner',
     'Cleaning Tools', 'Accessories'
+  ],
+  Hamster: [
+    'Hamster Food', 'Seeds & Nuts', 'Bedding & Hay', 'Cages & Habitats', 
+    'Exercise Wheels', 'Tunnels & Hideouts', 'Feeders & Water Bottles', 
+    'Chew Toys', 'Grooming Dust', 'Health Supplements', 'Accessories'
+  ],
+  Others: [
+    'General Food', 'Bedding & Hay', 'Cages', 'Feeders & Water Bottles', 
+    'Toys', 'Grooming', 'Health Supplements', 'Accessories'
   ]
 };
 
@@ -46,7 +55,7 @@ export default function SuppliesPage() {
 
   // Filters & States
   const [search, setSearch] = useState('');
-  const [petTypeFilter, setPetTypeFilter] = useState<'All' | 'Dog' | 'Cat' | 'Bird' | 'Fish'>('All');
+  const [petTypeFilter, setPetTypeFilter] = useState<'All' | 'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others'>('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc' | 'stock-asc'>('name');
@@ -108,7 +117,7 @@ export default function SuppliesPage() {
   };
 
   const getStockStatusBadge = (stock: number) => {
-    if (stock === 0) return 'bg-red-50 text-red-850 border-red-100';
+    if (stock === 0) return 'bg-red-50 text-red-855 border-red-100';
     if (stock <= 10) return 'bg-amber-50 text-amber-700 border-amber-100';
     return 'bg-emerald-50 text-emerald-700 border-emerald-100';
   };
@@ -200,7 +209,7 @@ export default function SuppliesPage() {
             <div className="flex items-center gap-2 text-xs">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Pet Type:</span>
               <div className="flex flex-wrap gap-1.5">
-                {(['All', 'Dog', 'Cat', 'Bird', 'Fish'] as const).map(type => (
+                {(['All', 'Dog', 'Cat', 'Bird', 'Fish', 'Hamster', 'Others'] as const).map(type => (
                   <button
                     key={type}
                     onClick={() => {
@@ -266,7 +275,7 @@ export default function SuppliesPage() {
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-white border border-slate-200 rounded-3xl text-center shadow-sm max-w-md mx-auto">
             <span className="text-4xl mb-3">📦</span>
             <h3 className="font-extrabold text-slate-800 text-sm">No supplies available.</h3>
-            <p className="text-xs text-slate-450 font-semibold mt-1.5 max-w-xs">
+            <p className="text-xs text-slate-455 font-semibold mt-1.5 max-w-xs">
               Click Add New to get started. Add pet foods, cages, and accessories.
             </p>
             <Button
@@ -431,7 +440,7 @@ export default function SuppliesPage() {
                         <div className="flex items-center justify-center gap-3">
                           <button
                             onClick={() => setViewingProduct(prod)}
-                            className="p-1 text-slate-450 hover:text-slate-800 transition cursor-pointer"
+                            className="p-1 text-slate-450 hover:text-slate-850 transition cursor-pointer"
                             title="View"
                           >
                             <Eye className="w-3.5 h-3.5" />

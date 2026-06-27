@@ -102,7 +102,7 @@ export default function ReviewsPage() {
 
                   {/* Review Text block */}
                   <p className="text-xs text-slate-600 italic leading-relaxed pt-1">
-                    "{rev.review}"
+                    &quot;{rev.review}&quot;
                   </p>
                 </div>
 

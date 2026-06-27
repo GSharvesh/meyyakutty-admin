@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,7 +16,7 @@ interface SupplyFormModalProps {
   productToEdit?: Product | null;
 }
 
-const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish', string[]> = {
+const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others', string[]> = {
   Dog: [
     'Dry Food', 'Wet Food', 'Puppy Food', 'Adult Food', 'Senior Food',
     'Treats', 'Toys', 'Grooming', 'Collars', 'Leashes', 'Harnesses',
@@ -33,6 +35,15 @@ const CATEGORIES_BY_PET_TYPE: Record<'Dog' | 'Cat' | 'Bird' | 'Fish', string[]> 
     'Fish Food', 'Aquarium', 'Filters', 'Air Pumps', 'Heaters', 'LED Lights',
     'Gravel', 'Decorative Plants', 'Decorations', 'Water Conditioner',
     'Cleaning Tools', 'Accessories'
+  ],
+  Hamster: [
+    'Hamster Food', 'Seeds & Nuts', 'Bedding & Hay', 'Cages & Habitats', 
+    'Exercise Wheels', 'Tunnels & Hideouts', 'Feeders & Water Bottles', 
+    'Chew Toys', 'Grooming Dust', 'Health Supplements', 'Accessories'
+  ],
+  Others: [
+    'General Food', 'Bedding & Hay', 'Cages', 'Feeders & Water Bottles', 
+    'Toys', 'Grooming', 'Health Supplements', 'Accessories'
   ]
 };
 
@@ -42,7 +53,7 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
   // Form Fields
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
-  const [petType, setPetType] = useState<'Dog' | 'Cat' | 'Bird' | 'Fish'>('Dog');
+  const [petType, setPetType] = useState<'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Hamster' | 'Others'>('Dog');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -52,7 +63,7 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
 
   // Discount Pricing states
   const [discountAvailable, setDiscountAvailable] = useState<'Yes' | 'No'>('No');
-  const [discountPrice, setDiscountPrice] = useState('');
+  const [discountPercent, setDiscountPercent] = useState('');
 
   // Images state (local upload)
   const [images, setImages] = useState<string[]>([]);
@@ -66,8 +77,14 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
       setCategory(productToEdit.category);
       setDescription(productToEdit.description);
       setPrice(productToEdit.price.toString());
-      setDiscountPrice(productToEdit.discountPrice ? productToEdit.discountPrice.toString() : '');
-      setDiscountAvailable(productToEdit.discountPrice ? 'Yes' : 'No');
+      if (productToEdit.discountPrice) {
+        setDiscountAvailable('Yes');
+        const calculatedPercent = Math.round(((productToEdit.price - productToEdit.discountPrice) / productToEdit.price) * 100);
+        setDiscountPercent(calculatedPercent.toString());
+      } else {
+        setDiscountAvailable('No');
+        setDiscountPercent('');
+      }
       setStock(productToEdit.stock.toString());
       setSku(productToEdit.sku || '');
       setStatus(productToEdit.status || 'Active');
@@ -79,7 +96,7 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
       setCategory(CATEGORIES_BY_PET_TYPE['Dog'][0]);
       setDescription('');
       setPrice('');
-      setDiscountPrice('');
+      setDiscountPercent('');
       setDiscountAvailable('No');
       setStock('');
       setSku('');
@@ -89,14 +106,34 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
   }, [productToEdit, isOpen]);
 
   // Adjust categories list when pet type changes
-  useEffect(() => {
-    if (!productToEdit || productToEdit.petType !== petType) {
-      const cats = CATEGORIES_BY_PET_TYPE[petType];
-      if (cats && cats.length > 0) {
-        setCategory(cats[0]);
-      }
+  const handlePetTypeChange = (newType: typeof petType) => {
+    setPetType(newType);
+    const cats = CATEGORIES_BY_PET_TYPE[newType];
+    if (cats && cats.length > 0) {
+      setCategory(cats[0]);
     }
-  }, [petType]);
+  };
+
+  const handleDiscountPercentChange = (val: string) => {
+    const clean = val.replace(/[^0-9]/g, '');
+    if (clean === '') {
+      setDiscountPercent('');
+      return;
+    }
+    const num = parseInt(clean, 10);
+    if (num > 100) {
+      setDiscountPercent('100');
+    } else if (num < 1) {
+      setDiscountPercent('1');
+    } else {
+      setDiscountPercent(num.toString());
+    }
+  };
+
+  const sellingPrice = parseFloat(price) || 0;
+  const percent = parseFloat(discountPercent) || 0;
+  const discountAmt = Math.round(sellingPrice * (percent / 100));
+  const finalPrice = Math.max(0, Math.round(sellingPrice - discountAmt));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,9 +149,14 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
       return;
     }
 
-    if (discountAvailable === 'Yes' && !discountPrice) {
-      alert('Please enter the discount price.');
-      return;
+    let calculatedDiscountPrice: number | undefined = undefined;
+    if (discountAvailable === 'Yes') {
+      const percentVal = parseInt(discountPercent, 10);
+      if (isNaN(percentVal) || percentVal < 1 || percentVal > 100) {
+        alert('Please enter a valid discount percentage (1–100%).');
+        return;
+      }
+      calculatedDiscountPrice = finalPrice;
     }
 
     if (images.length === 0) {
@@ -137,7 +179,7 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
       category,
       description,
       price: parseFloat(price),
-      discountPrice: discountAvailable === 'Yes' ? parseFloat(discountPrice) : undefined,
+      discountPrice: calculatedDiscountPrice,
       stock: parsedStock,
       sku,
       status: resolvedStatus,
@@ -231,13 +273,15 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
                   </label>
                   <select
                     value={petType}
-                    onChange={(e) => setPetType(e.target.value as any)}
+                    onChange={(e) => handlePetTypeChange(e.target.value as any)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:bg-white focus:border-primary/30 transition text-slate-700 font-medium"
                   >
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
                     <option value="Bird">Bird</option>
                     <option value="Fish">Fish</option>
+                    <option value="Hamster">Hamster</option>
+                    <option value="Others">Others</option>
                   </select>
                 </div>
 
@@ -306,51 +350,73 @@ export const SupplyFormModal: React.FC<SupplyFormModalProps> = ({ isOpen, onClos
               </div>
 
               {/* Pricing details */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Selling Price (INR) <span className="text-primary">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 45"
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Discount Available? <span className="text-primary">*</span>
-                  </label>
-                  <select
-                    value={discountAvailable}
-                    onChange={(e) => {
-                      setDiscountAvailable(e.target.value as 'Yes' | 'No');
-                      if (e.target.value === 'No') setDiscountPrice('');
-                    }}
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
-                  >
-                    <option value="No">No</option>
-                    <option value="Yes">Yes</option>
-                  </select>
-                </div>
-
-                {discountAvailable === 'Yes' && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Discount Price (INR) <span className="text-primary">*</span>
+                      Original Price (₹) <span className="text-primary">*</span>
                     </label>
                     <input
                       type="number"
                       required
-                      value={discountPrice}
-                      onChange={(e) => setDiscountPrice(e.target.value)}
-                      placeholder="e.g. 39"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. 450"
                       className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Discount Available? <span className="text-primary">*</span>
+                    </label>
+                    <select
+                      value={discountAvailable}
+                      onChange={(e) => {
+                        setDiscountAvailable(e.target.value as 'Yes' | 'No');
+                        if (e.target.value === 'No') setDiscountPercent('');
+                      }}
+                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
+                  </div>
+                </div>
+
+                {discountAvailable === 'Yes' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-200/60">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Discount Percentage (%) <span className="text-primary">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={discountPercent}
+                        onChange={(e) => handleDiscountPercentChange(e.target.value)}
+                        placeholder="1 - 100"
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm outline-none focus:border-primary/30 transition text-slate-700 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Discount Amount (₹)
+                      </label>
+                      <div className="w-full bg-slate-100/80 border border-slate-200/60 rounded-xl py-2.5 px-3.5 text-sm text-slate-500 font-bold leading-normal">
+                        ₹{discountAmt.toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Final Price (₹)
+                      </label>
+                      <div className="w-full bg-slate-100/80 border border-slate-200/60 rounded-xl py-2.5 px-3.5 text-sm text-slate-800 font-extrabold leading-normal">
+                        ₹{finalPrice.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

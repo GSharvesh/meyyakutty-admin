@@ -176,10 +176,10 @@ export default function CustomersPage() {
                       {customerReservations.length > 0 ? (
                         customerReservations.map(res => (
                           <div key={res.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs font-semibold">
-                            <div>
-                              <span className="block text-slate-850 font-bold">{res.petName}</span>
-                              <span className="block text-[9px] text-slate-400">Breed: {res.petBreed}</span>
-                            </div>
+                              <div>
+                                <span className="block text-slate-850 font-bold">{res.petBreed}</span>
+                                <span className="block text-[9px] text-slate-400">Pet ID: {res.petId}</span>
+                              </div>
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${
                               res.status === 'Completed' ? 'bg-blue-50 text-blue-800 border-blue-100' :
                               res.status === 'Approved' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' :
@@ -213,7 +213,7 @@ export default function CustomersPage() {
                                 ))}
                               </div>
                             </div>
-                            <p className="text-[11px] text-slate-500 font-semibold italic">"{rev.review}"</p>
+                            <p className="text-[11px] text-slate-500 font-semibold italic">&quot;{rev.review}&quot;</p>
                           </div>
                         ))
                       ) : (
